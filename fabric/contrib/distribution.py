@@ -12,6 +12,7 @@ Module provides simple API for remote host details and package management.
 from __future__ import with_statement
 from fabric.api import *
 from fabric.contrib.files import *
+from os import tmpnam
 
 def host_details(use_sudo=False, verbose=False):
     with hide('running', 'stdout', 'stderr'):
@@ -49,10 +50,39 @@ def host_details(use_sudo=False, verbose=False):
         return distro, version , extra, distro_arch, compatible
 
 def check_pkg_installed(*args, **kwargs):
-    #for pkg in 
-    pass
+    distro, version, extra, distro_arch, compatible = host_details(*kwargs)
+    pkg_dict = {}
+    with hide('running', 'stdout', 'stderr'):
+    
+        if compatible == 'deb':
+            for arg in args:
+                with settings(warn_only=True):
+                    dt = run('dpkg -l %s' % arg)
+                    if dt.startswith("No packages"):
+                        pkg_dict[arg] = False
+                    else:
+                        pkg_dict[arg] = True
+        if compatible == 'rpm':
+            for arg in args:
+                dt = run('rpm -qa %s' % arg)
+                if len(dt) > 0:
+                    pkg_dict[arg] = True
+                else: 
+                    pkg_dict[arg] = False
 
+
+        return pkg_dict
+
+def pkg_install(use_sudo=True):
+    pass
 
 
 def download(uri, dest=None, use_sudo=False):
-    pass
+    with hide('running', 'stdout', 'stderr'):
+        pkg_list = check_pkg_installed('curl')
+        if pkg_list['curl'] == False:
+            pkg_install('curl')
+        if dest == None:
+            dest = os.tmpnam()
+        run('curl %s > %s' % (uri, dest))
+        return dest
