@@ -42,7 +42,7 @@ def first(*args, **kwargs):
     """
     for directory in args:
         if not kwargs.get('use_sudo'):
-            if exists(directory, sudo=False):
+            if exists(directory, use_sudo=False):
                 return directory
         else:
             if exists(directory):
